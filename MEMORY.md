@@ -106,10 +106,15 @@ CREATED → PRODUCING → CLOSED
 - 核心发现：60+处 `status in ('1','2')` 校验，加status=4不需要改这些
 - 分类：SN/retroid(160) / 维修/报废(55) / 绑定工序(139) / 工序校验(3) / 工单管理(4)
 
-### PRD文档链接（需更新为V2.0以反映05-08方案变更）
+### PRD文档链接
 - 📦 组装看板：https://www.feishu.cn/docx/IBTCdp3uGoPqVLxZOnycW7WGnHg
 - 📋 工单结单：https://www.feishu.cn/docx/BcggdmZhvo1D8txqkj5cq2Xdnge
-- 🔧 维修报废：https://www.feishu.cn/docx/WGnJdeblgopw8WxZcmicCSL4nxd
+- 🔧 维修报废（旧）：https://www.feishu.cn/docx/WGnJdeblgopw8WxZcmicCSL4nxd
+- 🔧 **F3 维修工站 PRD V1.0**（2026-05-11）：https://www.feishu.cn/docx/CzlZd4s5ho3sg1xRBKYcDlNondg
+- 🔍 **F5 SN状态查询与作废 PRD V1.0**（2026-05-11）：https://www.feishu.cn/docx/X6ted14fGoUmSNxxKk7cgvd7nic
+- 📦 **F4 补料SN生成 PRD V1.0**（2026-05-11）：https://www.feishu.cn/docx/VM46d59fFo15szxRthUcZoRPnKb
+- 🔍 **F5 PRD V2.0（一期/二期拆分版）**：https://www.feishu.cn/docx/TLvadwR6GoeqJfxmyMocbgzjnvg
+- 📦 **F4 PRD V2.0（一期/二期拆分版）**：https://www.feishu.cn/docx/Dd9qd6pepoGSiuxwgzqc2nlHnbc
 
 ### 二期规划（2026-05-07 确认）
 - 工单类型治理、SAP映射对接、历史挂账修复、试产结案、版本管理、审批流、自动结单完善、远峰对接、工时统计
