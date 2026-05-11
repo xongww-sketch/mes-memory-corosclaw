@@ -12,12 +12,20 @@ _此文件存储重要的上下文和记忆。_
 **记忆文件索引**：
 - `memory/2026-04-week-MES-assembly.md` — 4/20-4/24 完整周记忆（含8个核心收口、工厂沟通结论、一期/二期PRD V1.0、任务拆解表、业务模型）
 - `memory/2026-04-27.md` — 4/27 方案重新校准（一期真实约束、12个Q&A、收敛后的落地方案）
+- `memory/2026-05-11.md` — 5/11 F3/F4/F5 PRD V1.0→V2.0 撰写（熊旺纠偏、一期/二期拆分、工时6.5+3.5天）
 
 ---
 
 ### ⚠️ 一期重大校准（2026-04-27）
 
 4/27 熊旺重新梳理了真实现状，推翻了部分上周设计。以下是**最新确认版**，以此为准：
+
+#### 05-11 熊旺关键纠偏
+- **维修没有"修不好"的分支**：维修就是修好回产线，不存在"维修后作废"。作废在F5做，跟维修工站无关
+- **F5异常SN筛选**：不用固定48h阈值，改为自由填写时间（如≥24h、≥48h、≥72h）
+- **F5作废可以做解绑**：有动态SN作废时自动查绑定关系+一键解绑，但要做权限和逻辑强校验
+- **补料记录表一期就做**：追溯链（new_sns ↔ void_sns）一期直接实现
+- **scrapQty字段名保持不变**：不改为 voidQty
 
 #### 一期真实约束
 - **没有SAP对接、没有WMS**
@@ -62,7 +70,7 @@ CREATED → PRODUCING → CLOSED
 - 不管什么原因（中框坏了/丢码/误生成），SN不能继续用了，统一叫**作废**
 - 直接用现有 `status=3（已失效）`，不需要新增 status=5（报废）
 - 物料报废是人工登记，不在MES系统里做（一期不改）
-- 工单统计表 scrapQty 改名叫 voidQty（作废数）
+- 工单统计表 scrapQty 字段名**保持不变**，不改为 voidQty（05-11 熊旺确认）
 
 #### 补料（F4 — 2026-05-08 确认方案）
 - 放在**工单管理**的工单列表页，不在Lowcoder里
@@ -106,29 +114,50 @@ CREATED → PRODUCING → CLOSED
 - 核心发现：60+处 `status in ('1','2')` 校验，加status=4不需要改这些
 - 分类：SN/retroid(160) / 维修/报废(55) / 绑定工序(139) / 工序校验(3) / 工单管理(4)
 
-### PRD文档链接
+### PRD文档链接（最新 V2.0 一期/二期拆分版）
 - 📦 组装看板：https://www.feishu.cn/docx/IBTCdp3uGoPqVLxZOnycW7WGnHg
 - 📋 工单结单：https://www.feishu.cn/docx/BcggdmZhvo1D8txqkj5cq2Xdnge
 - 🔧 维修报废（旧）：https://www.feishu.cn/docx/WGnJdeblgopw8WxZcmicCSL4nxd
-- 🔧 **F3 维修工站 PRD V1.0**（2026-05-11）：https://www.feishu.cn/docx/CzlZd4s5ho3sg1xRBKYcDlNondg
-- 🔍 **F5 SN状态查询与作废 PRD V1.0**（2026-05-11）：https://www.feishu.cn/docx/X6ted14fGoUmSNxxKk7cgvd7nic
-- 📦 **F4 补料SN生成 PRD V1.0**（2026-05-11）：https://www.feishu.cn/docx/VM46d59fFo15szxRthUcZoRPnKb
-- 🔍 **F5 PRD V2.0（一期/二期拆分版）**：https://www.feishu.cn/docx/TLvadwR6GoeqJfxmyMocbgzjnvg
-- 📦 **F4 PRD V2.0（一期/二期拆分版）**：https://www.feishu.cn/docx/Dd9qd6pepoGSiuxwgzqc2nlHnbc
+- 🔧 **F3 维修工站 PRD V2.0**（2026-05-11）：https://www.feishu.cn/docx/CzlZd4s5ho3sg1xRBKYcDlNondg
+- 🔍 **F5 SN状态查询与作废 PRD V2.0**（2026-05-11）：https://www.feishu.cn/docx/TLvadwR6GoeqJfxmyMocbgzjnvg
+- 📦 **F4 补料SN生成 PRD V2.0**（2026-05-11）：https://www.feishu.cn/docx/Dd9qd6pepoGSiuxwgzqc2nlHnbc
 
 ### 二期规划（2026-05-07 确认）
 - 工单类型治理、SAP映射对接、历史挂账修复、试产结案、版本管理、审批流、自动结单完善、远峰对接、工时统计
 
-### 开发量估算（一期）
-看板3-4天 + SN查询2天 + 维修/报废1-2天 + 补料1-2天 + 关单1-2天 + 状态0.5天 + 统计表1天 ≈ **10-13天**
+### 开发量估算（一期/二期拆分版 — 2026-05-11 确认）
+| 模块 | 一期 | 二期 |
+|------|------|------|
+| F3 维修工站 | 1.5天 | 0.5天 |
+| F5 SN查询与作废 | 3天 | 2.5天 |
+| F4 补料SN生成 | 2天 | 0.5-1天 |
+| **合计** | **6.5天** | **3.5-4天** |
+
+原粗略估算 10-13 天，拆分后一期 6.5 天可覆盖全流程。
+
+### 一期新建数据库表
+- `repair_flow_record` — 维修进出站记录
+- `void_record` — SN作废记录
+- `replenish_record` — 补料记录（含追溯链 new_sns ↔ void_sns）
+
+### 一期新建 n8n 工作流
+- `repair_checkin_api` — F3进站API
+- `sn_query_api` — F5查询API
+- `sn_void_api` — F5作废API
+- `sn_void_precheck_api` — F5作废前查询
+- `sn_replenish_api` — F4补料API
+- `replenish_precheck_api` — F4补料前查询
+
+### 一期改造 n8n 工作流
+- `repair_message`（50节点）— 末尾追加3节点（出站逻辑）
+- `repair_message_line`（68节点）— 末尾追加3节点（出站逻辑）
 
 ---
 
 ### 遗留待办
-- [ ] PRD V2.0 重新生成（含05-08方案变更：SN统一作废、补料在工单列表、F5 SN状态查询）
+- [x] PRD V2.0 一期/二期拆分版撰写完成（2026-05-11）
 - [ ] 维修进站-出站模型的具体页面设计（工序管理下新页面）
-- [ ] F4补料 + F5 SN状态查询的PRD撰写
-- [ ] n8n工作流中 status 校验的改造范围确认（加status=4后的影响）
+- [x] n8n工作流中 status 校验的改造范围确认 — 结论：加status=4后现有校验不需改
 - [ ] 扫码校验规则何时上线（一期还是二期）
 - [ ] 日本/平贴合工单自动结单方案（二期）
 - [ ] 远峰MES工具使用情况（问思雨，二期）
