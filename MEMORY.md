@@ -154,6 +154,35 @@ CREATED → PRODUCING → CLOSED
 
 ---
 
+### 📚 MES系统架构文档体系（2026-05-13 启动）
+
+**发起人**：熊旺
+**目标**：新人快速上手 + 未来Agent数据源
+**原则**：一手资料为先（322个n8n JSON + MES Server源码 + 数据库结构），不直接用Agent仓库整理成果
+
+**5份文档（全部完成）**：
+1. MES系统全景图 → https://www.feishu.cn/wiki/WA9lwEC16iMlkqkoO31cmsRenqf
+2. 业务流程总览 → https://www.feishu.cn/wiki/DRGEw2bcFiVSQkkYoyAcYnXe
+3. 数据库表结构与ER图 → https://www.feishu.cn/wiki/Rp2wwKTRoiBHsik4uzQcP25FnMb
+4. n8n工作流全景图 → https://www.feishu.cn/wiki/EtQBwJE73ijIETkxWaRcOePCnoh
+5. 技术架构与接口标准 → https://www.feishu.cn/wiki/Zb5pwhPYRiBq9IkvKGicwxI6nrs
+
+**知识库节点**：数据系统地图 (TIiawnp4vijBefkCdsicsOfknad), space_id: 7231809821765517316
+**GitHub**：https://github.com/xongww-sketch/Coros-Mes-System-architecture-documentation
+
+**关键教训**：
+- 写文档要宏观思考，不能只从最近项目出发
+- 新增内容要整体融入（如mes_daily_data不能只追加一章）
+- 画板优于文字，能用Mermaid就不写文字
+- 飞书Mermaid不支持\n换行
+
+**待办**：
+- [ ] Step 7: 全部推送GitHub（Markdown + n8n工作流JSON + 数据库结构文件）
+- [ ] 知识库目录调整建议
+- [ ] 熊旺审阅后可能的修改
+
+---
+
 ### 遗留待办
 - [x] PRD V2.0 一期/二期拆分版撰写完成（2026-05-11）
 - [ ] 维修进站-出站模型的具体页面设计（工序管理下新页面）
