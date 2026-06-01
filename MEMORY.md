@@ -291,6 +291,26 @@ remark?: string;     // 备注
 
 ---
 
+### 📊 渠道（channel）数据回补（2026-06-01）
+
+**问题**：8000 个 SN 有激活数据但 `daily_info.channel` 为空，影响新 MES 和旧 MES 供给 coros 后台。
+
+**交付**：`channel_backfill.json`（28 节点 n8n 工作流），并行双分支架构：
+- 新 MES 线：补 delivery_detail → 插 daily_info 新行（createtime=now）
+- 旧 MES 线：循环批量 UPDATE consm_barcodebindinfo（只 UPDATE 不 INSERT）
+- 各自汇总后发邮件到 xiongwang@coros.com
+
+**关键决策**：
+- daily_info 旧空行不管（mes_info 只拉最新 createtime）
+- 国外渠道源用 OMS `snoutbounds`（最准）
+- 新 MES 按 createtime 最新行判定有无 channel
+- 旧 MES 只 UPDATE 不 INSERT，Channel 有值不改
+- 支持指定日期范围参数（start_date/end_date）
+
+**文件**：`/home/node/.openclaw/workspace/channel_backfill.json`
+
+---
+
 ### 遗留待办
 - [x] PRD V2.0 一期/二期拆分版撰写完成（2026-05-11）
 - [x] F3 维修工站 PRD 增补：进站设计增加纯前端统计列表（工单号+数量，带清零按钮）（2026-05-25 新增，2026-05-26 已写入文档）
