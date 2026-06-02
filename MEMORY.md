@@ -291,23 +291,34 @@ remark?: string;     // 备注
 
 ---
 
-### 📊 渠道（channel）数据回补（2026-06-01）
+### 📊 渠道（channel）数据回补（2026-06-01 启动，06-02 持续）
 
 **问题**：8000 个 SN 有激活数据但 `daily_info.channel` 为空，影响新 MES 和旧 MES 供给 coros 后台。
 
-**交付**：`channel_backfill.json`（28 节点 n8n 工作流），并行双分支架构：
-- 新 MES 线：补 delivery_detail → 插 daily_info 新行（createtime=now）
-- 旧 MES 线：循环批量 UPDATE consm_barcodebindinfo（只 UPDATE 不 INSERT）
-- 各自汇总后发邮件到 xiongwang@coros.com
+**初始交付**：`channel_backfill.json`（28 节点 n8n 工作流），并行双分支架构。
 
-**关键决策**：
-- daily_info 旧空行不管（mes_info 只拉最新 createtime）
-- 国外渠道源用 OMS `snoutbounds`（最准）
-- 新 MES 按 createtime 最新行判定有无 channel
-- 旧 MES 只 UPDATE 不 INSERT，Channel 有值不改
-- 支持指定日期范围参数（start_date/end_date）
+**06-02 遗留问题**：606 个 SN 回补后仍无渠道。特征：China 517 + 海外 89，激活 4/1~5/31，retroid 全部 10 位（非过滤问题）。大概率源头本身无渠道数据。
 
-**文件**：`/home/node/.openclaw/workspace/channel_backfill.json`
+**06-02 迭代交付**：
+- `channel_diagnose.json`（9 节点）— 诊断 606 个 SN 卡在哪个环节（4 分类：源头无/生产缺失/流程漏网/已有渠道）
+- `channel_backfill_by_list.json`（17 节点）— 简化版回补，无生产信息也插 daily_info（production_id 允许 NULL）
+- `channel_check_readonly.json`（6 节点）— 纯只读查询，先看清哪些有渠道再决定补
+
+**06-02 管易调研**：
+- 管易 API 按**单据编号 code** 查询，不能直接按 SN 查
+- SN → channel 路径：SN → 单据编号 → 管易 detail → shop_name/customer_name → 映射表转 channelId
+- 管易同步源头工作流 `TofAt0klEbQoXdN5`（52 节点），日期硬编码在签名节点（6 小时窗口）
+- 管易查询限 24 小时间隔 → 按天拆分交付 3 个工作流：guanyi_sync_0405 / 0406 / 0407
+- 先跑管易同步补源头 → 再跑回补流程 → daily_info 补上
+
+**管易映射表**（channelId 重要参考）：
+- 线上：抖音10851 / 天猫10587 / 京东10760 / 小红书10920 / 有赞10764 / 微信小店11049 / 得物11048 / 订货商城11064 / COROS高驰数码旗舰店11096
+- 线下：飞亚达11066 / 上海蔚景11055 / 北京京东11066 / 云南九机11054 / 迪脉10866 / 顺电11090 / 京东闪送11075 / 无锡汇跑11020
+- 特殊：shop=COROS线下渠道→默认10470；shop=订货商城→customer_name本身就是channelId
+
+**性能优化建议**：`CREATE INDEX idx_daily_info_retroid ON mes_daily_data.daily_info(retroid)`
+
+**文件**：`/home/node/.openclaw/workspace/channel_backfill.json` 及 06-02 各迭代版本
 
 ---
 
