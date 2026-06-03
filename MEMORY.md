@@ -14,6 +14,7 @@ _此文件存储重要的上下文和记忆。_
 - `memory/2026-04-27.md` — 4/27 方案重新校准（一期真实约束、12个Q&A、收敛后的落地方案）
 - `memory/2026-05-11.md` — 5/11 F3/F4/F5 PRD V1.0→V2.0 撰写（熊旺纠偏、一期/二期拆分、工时6.5+3.5天）
 - `memory/2026-05-21.md` — 5/21 scrap_record验证、标准字段规范、线别架构讨论、PRD知识库整理
+- `memory/2026-06-03.md` — 6/3 MES→coros后台同步架构重设计（三通道+状态机+对账、6工作流盘点、V1设计稿交付）
 
 ---
 
@@ -319,6 +320,39 @@ remark?: string;     // 备注
 **性能优化建议**：`CREATE INDEX idx_daily_info_retroid ON mes_daily_data.daily_info(retroid)`
 
 **文件**：`/home/node/.openclaw/workspace/channel_backfill.json` 及 06-02 各迭代版本
+
+---
+
+### 🔄 MES→coros后台 同步架构重设计（2026-06-03 启动）
+
+**发起人**：熊旺
+**目标**：解决长期存在的"漏同步/渠道空/wifimac空/无法重试/无法及时发现/实时性不足"
+
+**根因**：用"定时批量快照"承担了本应"事件驱动 + 状态机 + 对账补偿"的职责。
+
+**目标架构**：三通道 + sync_task状态机 + 对账补偿
+- 🔴 实时通道：绑定(工序39)/解绑(工序62)末尾挂推送 → coros实时PUSH接口
+- 🟡 批量通道：生产/包装/渠道保留定时但加状态登记 + 幂等upsert
+- sync_task表：retroid+sync_type唯一，记录PENDING/SUCCESS/FAILED+retry_count+last_error
+- 对账工作流：定时扫缺口（缺渠道/缺wifimac）→ 重入sync_task → 仍失败告警
+- daily_info结论：保留小改不重做
+
+**交付物**：
+- 设计稿 V1：`workspace/sync_architecture_design_v1.md`
+- 飞书文档：https://www.feishu.cn/docx/FubzdyBq0ogPLIx5RVjcZnxNn4e
+- 工作流备份：`workspace/references/n8n/current-sync/`
+
+**coros实时PUSH接口**：
+- URL: `POST https://simpleadmincntest.coros.com/coros/admin/product/mes/push`
+- 签名: SHA1 40位hex（⚠️ 签名拼接规则+secret密钥待提供，落地阻塞点）
+- Body: `{ "msg": [{完整daily_info记录}] }`，msg数组可批量，同一SN可多次push增量补全
+
+**5个待确认**：
+1. coros实时推送接口文档
+2. 绑定/解绑的n8n工作流位置
+3. 包装完成事件判断方式
+4. 旧MES回写范围（含日本数据）
+5. 重试/对账频率
 
 ---
 
