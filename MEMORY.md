@@ -323,12 +323,18 @@ remark?: string;     // 备注
 
 ---
 
-### 🔄 MES→coros后台 同步架构重设计（2026-06-03 启动）
+### 🔄 MES→coros后台 同步架构重设计（2026-06-03 启动，2026-06-04 选型定稿）
 
 **发起人**：熊旺
 **目标**：解决长期存在的"漏同步/渠道空/wifimac空/无法重试/无法及时发现/实时性不足"
 
 **根因**：用"定时批量快照"承担了本应"事件驱动 + 状态机 + 对账补偿"的职责。
+
+**⚠️ 架构选型定稿（2026-06-04）**：全 n8n 路线，不动 Server
+- 熊旺提出：MES Server 有 MQ 能力，能否用 Server 统一做多数据源操作？
+- 分析：Server 用 Prisma 只连主 PG 库，同步涉及多异构数据源（PG mes/mes_jp、SQL Server 旧MES、MongoDB OMS、管易 API），Server 天然不适合。
+- 熊旺纠正现状：**n8n 已把绑定/解绑工作流跑起来了，Server 基本是空壳**。
+- **决策**：先全用 n8n。绑定/解绑实时推送直接在现有 n8n 工作流末尾挂 HTTP 节点；Server 不碰。
 
 **目标架构**：三通道 + sync_task状态机 + 对账补偿
 - 🔴 实时通道：绑定(工序39)/解绑(工序62)末尾挂推送 → coros实时PUSH接口
@@ -336,6 +342,10 @@ remark?: string;     // 备注
 - sync_task表：retroid+sync_type唯一，记录PENDING/SUCCESS/FAILED+retry_count+last_error
 - 对账工作流：定时扫缺口（缺渠道/缺wifimac）→ 重入sync_task → 仍失败告警
 - daily_info结论：保留小改不重做
+
+**全 n8n 实现步骤（4步 + 1卡点）**：
+1. 建 `sync_task` 表 → 2. 改6个工作流追加 HTTP 节点 + 状态登记 → 3. SHA1 签名节点 → 4. 对账工作流
+- ⚠️ 唯一卡点：coros 实时 PUSH 接口文档（地址+入参+SHA1签名规则+secret），没有则第3步做不了，但1/2/4可并行开工
 
 **交付物**：
 - 设计稿 V1：`workspace/sync_architecture_design_v1.md`
