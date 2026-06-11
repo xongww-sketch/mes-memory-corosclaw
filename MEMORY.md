@@ -406,7 +406,7 @@ remark?: string;     // 备注
 - [ ] 扫码校验规则何时上线（一期还是二期）
 - [ ] 日本/平贴合工单自动结单方案（二期）
 - [ ] 远峰MES工具使用情况（问思雨，二期）
-- [x] cron记忆同步修复：2026-06-10 重建定时任务（旧任务丢失，断了6/7-6/10几天）。新任务ID `ec6fdb80-de2f-4a9d-bd93-d9ce7eae8e50`「MES记忆每日同步 21:00」，cron `0 21 * * *` Asia/Shanghai，main session systemEvent，职责=回顾对话→整理记忆→推GitHub。每天必跑。
+- [x] cron记忆同步修复：2026-06-11 彻底定位根因（jobs.json文件存在但调度器内存未加载），重建为完整 agentTurn 版本。新任务ID `7432242d-2bd0-45e6-ba13-6f0243779c3f`「MES记忆每日同步」，cron `0 21 * * *` Asia/Shanghai，isolated agentTurn，delivery announce→飞书。force run 验证成功（90秒真干活）。
 - [ ] 检查一期新建表（repair_flow_record、void_record、replenish_record）是否已包含标准字段（2026-05-21 新增）
 - [ ] PRD 知识库按业务分类整理（2026-05-21 启动）
 - [ ] 线别架构全方位方案设计（行业参考 + 扩展性 + 可维护性）（2026-05-21 启动）
