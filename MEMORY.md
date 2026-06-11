@@ -15,6 +15,7 @@ _此文件存储重要的上下文和记忆。_
 - `memory/2026-05-11.md` — 5/11 F3/F4/F5 PRD V1.0→V2.0 撰写（熊旺纠偏、一期/二期拆分、工时6.5+3.5天）
 - `memory/2026-05-21.md` — 5/21 scrap_record验证、标准字段规范、线别架构讨论、PRD知识库整理
 - `memory/2026-06-03.md` — 6/3 MES→coros后台同步架构重设计（三通道+状态机+对账、6工作流盘点、V1设计稿交付）
+- `memory/2026-06-11.md` — 6/11 n8n-mcp-gateway 搭建与迭代（v0.1→v0.4 + Skill 封装分发 + token 精简）、cron 定时任务修复验证
 
 ---
 
@@ -366,6 +367,37 @@ remark?: string;     // 备注
 
 ---
 
+### 🔌 n8n-mcp-gateway 团队查询网关（2026-06-11 上线）
+
+**发起人**：熊旺
+**目标**：团队内任意 agent 通过标准 MCP 协议或 REST API 只读查询 n8n 工作流信息，无需暴露 n8n 真实 API key。
+
+**部署**：192.168.64.54:9130（内网，物理隔绝外部）
+**代码**：workspace/n8n-mcp-gateway/（Node+TS+@modelcontextprotocol/sdk，Streamable HTTP）
+**容器**：/opt/n8n-mcp-gateway/，docker compose
+
+**最终形态（v0.4）**：
+- `/mcp` — MCP Streamable HTTP 端点
+- `/api/query/{tool}` — REST JSON 查询端点（Bearer token 鉴权）
+- `/skill/n8n` — 裸 SKILL.md（text/markdown），agent web_fetch 即装
+- 无管理 UI，token 管理走配置文件 config/tokens.json
+
+**4 个只读工具**：find_workflow / find_email_recipients / read_workflow_logic / find_failed_executions
+
+**架构**：token → 角色 → 能力白名单 → n8n key 池（四层解耦）
+**Token**：tok_8iOYaRZKVBf2vH3Piw58EWVe7WQp8qcj（全体团队-只读）
+**设计文档**：https://www.feishu.cn/docx/Eh8Xd4kv0oHF1AxzzlJcBhV7nHf
+
+**Skill 分发**：
+- 统一安装 URL（aihot 风格）：http://192.168.64.54:9130/skill/n8n
+- 一个 SKILL.md 含两种接入方式：A）装 MCP 客户端 / B）直接 curl REST
+- 支持平台：Claude Code / Cursor / Codex / OpenClaw / Gemini CLI / GitHub Copilot / OpenCode / Cline / Windsurf 等
+- Skills Registry：http://skills.apps.coros.team（slug=n8n，n8n-mcp，n8n-curl）
+
+**安全**：n8n 真 key 藏后台；token 只读可控；仅内网可访问
+
+---
+
 ### 遗留待办
 - [x] PRD V2.0 一期/二期拆分版撰写完成（2026-05-11）
 - [x] F3 维修工站 PRD 增补：进站设计增加纯前端统计列表（工单号+数量，带清零按钮）（2026-05-25 新增，2026-05-26 已写入文档）
@@ -374,7 +406,7 @@ remark?: string;     // 备注
 - [ ] 扫码校验规则何时上线（一期还是二期）
 - [ ] 日本/平贴合工单自动结单方案（二期）
 - [ ] 远峰MES工具使用情况（问思雨，二期）
-- [ ] ~~cron记忆同步修复~~（需持续观察）
+- [x] cron记忆同步修复：2026-06-10 重建定时任务（旧任务丢失，断了6/7-6/10几天）。新任务ID `ec6fdb80-de2f-4a9d-bd93-d9ce7eae8e50`「MES记忆每日同步 21:00」，cron `0 21 * * *` Asia/Shanghai，main session systemEvent，职责=回顾对话→整理记忆→推GitHub。每天必跑。
 - [ ] 检查一期新建表（repair_flow_record、void_record、replenish_record）是否已包含标准字段（2026-05-21 新增）
 - [ ] PRD 知识库按业务分类整理（2026-05-21 启动）
 - [ ] 线别架构全方位方案设计（行业参考 + 扩展性 + 可维护性）（2026-05-21 启动）
