@@ -4,6 +4,18 @@ _此文件存储重要的上下文和记忆。_
 
 ---
 
+## ⛔ 硬规则（熊旺 2026-06-16 强制要求）
+
+**查 n8n 工作流，永远只用 n8n API key 调 Public API 拉实时最新定义，绝不看本地 zip/备份/缓存。**
+- n8n 地址：`https://n8n.mes.coros.team/api/v1`
+- API key（readonly）：`workspace/n8n-mcp-gateway/config/tokens.json` 的 `keyPool.readonly`（JWT）
+- 拉单个：`GET /workflows/{id}`（X-N8N-API-KEY header）
+- 拉全量：`GET /workflows?limit=250` 分页 cursor
+- 原因：本地备份会过时，曾因用过时备份导致改造错位（6/15 教训：本地69节点 vs 生产139节点混合脏版）
+- references/n8n/*.zip 和 all-workflows 等本地副本：**仅作历史参考，绝不作为改造基线**
+
+---
+
 ## 🏭 MES 组装段项目（2026-04-20 启动）
 
 **项目负责人**：熊旺
@@ -449,3 +461,32 @@ remark?: string;     // 备注
 - [ ] 检查一期新建表（repair_flow_record、void_record、replenish_record）是否已包含标准字段（2026-05-21 新增）
 - [ ] PRD 知识库按业务分类整理（2026-05-21 启动）
 - [ ] 线别架构全方位方案设计（行业参考 + 扩展性 + 可维护性）（2026-05-21 启动）
+
+---
+
+### 🔑 coros 完整记录推送接口（2026-06-16 王志坚提供，关键凭据）
+
+**接口**：`POST https://simpleadmincntest.coros.com/coros/admin/product/mes/push`
+**Apifox**：https://app.apifox.com/link/project/4564505/apis/api-436001509
+**Header**：signature + timestamp + nonce + Content-Type:application/json
+**Body**：`{"msg":[{完整daily_info行}]}`，可批量
+
+**签名算法**（排序后拼接再SHA1，关键）：
+```
+nonce     = 9位随机数 (100000000~999999999)
+timestamp = 秒级时间戳 (System.currentTimeMillis()/1000)
+secret    = "7mQxK2vNc8LpHs4Tg9YdR1bWf6JzUaEe"  (mesProductPushSignToken)
+li = [nonce, timestamp, secret] → Collections.sort(字典序)
+signature = DigestUtils.sha1Hex(li[0]+li[1]+li[2])
+```
+三值字典序排序后拼接再 SHA1Hex，40位hex。三个 header 都要带。
+
+**协议规则**：
+- 按 retroid 去重
+- retroid/uuid/createtime 不能为空
+- 返回 result=0000 成功，否则失败（有多种异常错误码）
+
+**daily_info 完整字段**（=推送body字段）：
+id, retroid, production_id, delivery_id, machine_type, job_number, uuid, phase, wifi_mac, battery, screen, remark, channel, createtime, production_createtime, delivery_createtime, packing_createtime
+
+**注意**：这是【完整记录推送接口】（低频，推daily_info完整行）。锁机推送接口（高频3分钟，推uuid绑定状态）是另一套，coros还没给，按我方规范让他们写。
