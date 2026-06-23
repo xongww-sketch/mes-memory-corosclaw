@@ -449,12 +449,38 @@ remark?: string;     // 备注
 
 ---
 
+### 📦 MES→coros 方案A 落地状态（2026-06-23 更新）
+
+**当前状态**：v3 全套包已审查 + n8n 实时核对，**不能上生产**，有 3 个 P0 阻断级问题。
+
+**6 个 [Sync]_TEST 工作流全部已导入 n8n**（366 条工作流，分两页）：
+- W1 采集-生产（8YvZYFmX8tDbDBGR）/ W2 采集-包装（IKoMJoE26qQxQqd2）/ W3 采集-渠道（taQjkD0O93uVoQyY）
+- W4 写入编排（KGnK8xrRAKDri56r，06-23 09:23 最新编辑）
+- W5 coros推送（XharAFteU + LtgahvKv 重复 2 份）/ W6 监控告警（qwnAZUEE8yXUnPsm）
+
+**P0 阻断级问题**：
+1. W5 成功/失败标记 SQL 报错（continueErrorOutput + item 指向错位）→ 改 Code 节点逐条写
+2. W4 误报逻辑未修（非幂等 INSERT）→ 改 INSERT ON CONFLICT
+3. W5 重复导入 2 份 → 删除一份
+
+**pack_id 修复**：
+- W4 已传 pack_id，但 S3 存储过程签名不匹配
+- 已交付 `S3_upsert_daily_info_含pack_id.sql`（仅加 1 参数，其余不动）
+- daily_info 表确认有 pack_id 列（FK → pack_detail.id）
+
+**日本数据双插**：日本分支同时写 production_detail2 + pack_detail，是历史设计，待熊旺确认业务意图。
+
+**教训**：n8n API `limit=250` 有分页（nextCursor），总数超 250 必须拉第二页。
+
+---
+
 ### 遗留待办
 - [x] PRD V2.0 一期/二期拆分版撰写完成（2026-05-11）
 - [x] F3 维修工站 PRD 增补：进站设计增加纯前端统计列表（工单号+数量，带清零按钮）（2026-05-25 新增，2026-05-26 已写入文档）
 - [ ] 维修进站-出站模型的具体页面设计（工序管理下新页面）
 - [x] n8n工作流中 status 校验的改造范围确认 — 结论：加status=4后现有校验不需改
 - [ ] 扫码校验规则何时上线（一期还是二期）
+- [ ] 方案A 落地：W5 标记SQL 修复 + W4 误报修复 + W5 去重 + S3 存储过程部署 + 全链路实测（2026-06-23 新增）
 - [ ] 日本/平贴合工单自动结单方案（二期）
 - [ ] 远峰MES工具使用情况（问思雨，二期）
 - [x] cron记忆同步修复：2026-06-11 彻底定位根因（jobs.json文件存在但调度器内存未加载），重建为完整 agentTurn 版本。新任务ID `7432242d-2bd0-45e6-ba13-6f0243779c3f`「MES记忆每日同步」，cron `0 21 * * *` Asia/Shanghai，isolated agentTurn，delivery announce→飞书。force run 验证成功（90秒真干活）。
