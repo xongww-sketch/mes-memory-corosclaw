@@ -435,6 +435,18 @@ remark?: string;     // 备注
 
 ---
 
+### 🔧 n8n Code 节点聚合逻辑加固（2026-06-30）
+
+**问题**：生产数据同步工作流 `c7zreHpUy6i4yPN1` 的 Code 节点中，`procedureDetailId=148`（WiFi MAC）存在覆盖式赋值缺陷——同一 retroid 有两条 148 记录（一有 mac 一空）时，空值可能覆盖有值，导致 wifi_mac 丢失。
+
+**根因**：直接覆盖赋值 `results[retroidId].wifi_mac = record.json.data.mac`，上游 SQL 无 ORDER BY 保证顺序。
+
+**方案**：引入 `_locked` 内部标记的"有效绑定优先锁定"策略——字段一旦被有效绑定写入就锁定，解绑记录和空记录都无法冲掉。同时加固 39(UUID)、31(Battery)、50(Screen)、59(Remark) 同类风险。
+
+**状态**：代码已交付，待确认部署方式（直接推生产 vs 先建 TEST 副本验证）。
+
+---
+
 ### 🔧 activation_records 表治本改造（2026-06-15）
 
 **背景**：品质团队需追溯手表原始激活日期（第一次激活 → 登记不良的间隔），但换主板重新激活时旧记录被删除，原始激活时间永久丢失。
