@@ -435,15 +435,38 @@ remark?: string;     // 备注
 
 ---
 
-### 🔧 n8n Code 节点聚合逻辑加固（2026-06-30）
+### 🔧 n8n Code 节点聚合逻辑加固（2026-06-30，07-01 方案确认）
 
 **问题**：生产数据同步工作流 `c7zreHpUy6i4yPN1` 的 Code 节点中，`procedureDetailId=148`（WiFi MAC）存在覆盖式赋值缺陷——同一 retroid 有两条 148 记录（一有 mac 一空）时，空值可能覆盖有值，导致 wifi_mac 丢失。
 
 **根因**：直接覆盖赋值 `results[retroidId].wifi_mac = record.json.data.mac`，上游 SQL 无 ORDER BY 保证顺序。
 
-**方案**：引入 `_locked` 内部标记的"有效绑定优先锁定"策略——字段一旦被有效绑定写入就锁定，解绑记录和空记录都无法冲掉。同时加固 39(UUID)、31(Battery)、50(Screen)、59(Remark) 同类风险。
+**方案演进**：
+1. 方案 A（被动防护）：非空保护——空值不覆盖已取到的值
+2. 方案 B（主动锁定，最终采用）：引入 `_locked` 内部标记的"有效绑定优先锁定"策略——区分解绑/有效绑定，有效绑定有值就锁定，解绑和空记录都无法冲掉
+
+**加固范围**：148(WiFi MAC)、39(UUID)、31(Battery)、50(Screen)、59(Remark) 共 5 个字段。
 
 **状态**：代码已交付，待确认部署方式（直接推生产 vs 先建 TEST 副本验证）。
+
+---
+
+### 🍎 Apple MFI 工作流全链路分析（2026-07-01）
+
+**发起人**：熊旺
+**目标**：分析 Apple 项目下所有工作流中 `applemfi` 每个字段的插入逻辑，基于 n8n 最新工作流。
+
+**项目概况**：Apple 项目下 6 个工作流，2 个 ACTIVE（新 MES 版本）。
+
+**数据流**：产线扫码 → 申请 Apple Token(HTTP Request) → CRC16 转换 → Code 节点组装 → Postgres 插入 `machine_data` 表。
+
+**关键发现**：
+- applemfi 数据最终写入 `machine_data` 表（通过 data 字段间接存储）
+- Token 状态流转：初始 → status=2（已使用）
+- 新旧 MES 两套工作流并存，都在往 machine_data 写入
+- 多个 Code 节点（Code/Code1/Code2/Code3）分别处理不同字段组映射
+
+**状态**：完整字段映射分析已交付。
 
 ---
 
