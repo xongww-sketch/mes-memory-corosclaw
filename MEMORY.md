@@ -549,6 +549,33 @@ remark?: string;     // 备注
 
 ---
 
+### 🚦 产线上传性能排查（2026-07-10）
+
+**发起人**：熊旺
+**问题**：产线本地机（192.168.52.68）请求 `https://n8n.mes.coros.team/prod/check_data` 偶发超时 ~10s。
+
+**链路**：本地机 → Nginx（生产环境）→ n8n webhook → n8n 处理
+
+**排查结论**：
+- **瓶颈在 n8n 服务端**，不在 Nginx 层。Nginx 上游连接耗时 0.000s，网络层极小。
+- **慢接口**：`/prod/get_sap_material` 平均 3.2s，`/prod/warehouseOutgoing` 平均 3.0s
+- **高频接口**：`/prod/checkFQC`（1283 次，均 1.14s）、`/prod/smt_test_API`（682 次，均 1.04s）
+- **4 个 webhook 端口（5780-5783）**请求分布均匀（各 ~7100 次），峰值 69 req/s
+- **Redis 队列无积压**（bull:* keys 为空）
+- **服务器 48 核**，资源充裕
+
+**交付物**：
+- 监控脚本（Mac 验证通过，每 2s 请求 + DNS/TCP/TLS/服务端各阶段耗时）
+- Nginx timing 日志格式（记录 `req_time/up_connect/up_header/up_resp` 到 `prod_timing.log`）
+- 120 次实测：成功率 100%，平均 726ms，最大 5295ms，慢请求（>3s）9 次
+
+**长期关注**：
+- 优化慢接口（get_sap_material、warehouseOutgoing 平均 >3s）
+- 确认 n8n runner/worker concurrency 配置
+- logrotate 防止 timing 日志占满磁盘
+
+---
+
 ### 📐 高驰全链路业务全景 V2（2026-07-03 创建）
 
 **发起人**：熊旺
