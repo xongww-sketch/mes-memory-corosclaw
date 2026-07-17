@@ -29,6 +29,7 @@ _此文件存储重要的上下文和记忆。_
 - `memory/2026-06-03.md` — 6/3 MES→coros后台同步架构重设计（三通道+状态机+对账、6工作流盘点、V1设计稿交付）
 - `memory/2026-06-11.md` — 6/11 n8n-mcp-gateway 搭建与迭代（v0.1→v0.4 + Skill 封装分发 + token 精简）、cron 定时任务修复验证
 - `memory/2026-06-12.md` — 6/12 n8n 全链路数据完整性论证（两轮分析+熊旺决策：先稳后推+测试先行）
+- `memory/2026-07-17.md` — 7/17 Apple FindMy Token 一期工作流交付（4个工作流导入+告警配置+接口文档）
 
 ---
 
@@ -512,6 +513,18 @@ remark?: string;     // 备注
 - **需要问 Apple/NPI 的 3 件事**：SAS unpair API 可行性 / renewed token 二次激活 / 要 SAS Server Spec 文档
 
 **参考文档**：《Find My Network Accessory Protocol Specification R3》
+
+**一期交付状态（2026-07-17 完成）**：
+- ✅ 4 个工作流全部导入 n8n：
+  - `NHOEqimcuRKxVZ54` — Token 下载唯一性校验
+  - `o072Hb2uR87ujocN` — Token 库存阈值告警（黄线500/红线200/每6h/飞书webhook）
+  - `1vpHYTqraKRmUUDL` — 写入后反查 Apple 状态校验（PROCESSING 不告警）
+  - SN 反查接口 — SN/UUID → Apple Token 查询（返回体已统一格式）
+- ✅ 告警策略：A 方案（只告警不停止）
+- ✅ 接口文档已交付
+- ⏸️ 维修场景暂缓，留到二期
+
+**交付教训**：熊旺要求给完整工作流文件（基于 n8n 最新生产定义），不要零散节点或接线图。
 
 **产出文档**：
 - V1 方案：https://www.feishu.cn/docx/Pbfld8dV1odk9cxKJWdcvWT3ngd
