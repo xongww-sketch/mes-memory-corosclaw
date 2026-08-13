@@ -693,6 +693,21 @@ remark?: string;     // 备注
 
 ---
 
+### ⚠️ n8n Set 节点 O(N²) 反模式（2026-08-13 发现）
+
+**铁律：`JSON.stringify($input.all()...)` 写在 Set 节点表达式里 = O(N²)，必须改用 Code 节点 `runOnceForAllItems`。**
+- Set 节点默认对每个 item 各求值一次，表达式里 `$input.all()` 每次序列化全部数据 → N×N
+- 数据量小时（<500行）感知不到，数据量一大就雪崩（7208行→5200万次序列化→240s超时）
+- 修复：换 Code 节点 + `runOnceForAllItems`，只执行一次
+- **待办：全量扫雷所有工作流，揪出同样写法**（Set 节点 + `$input.all()`/`$items()` + 未设 executeOnce）
+
+### ⭐ 接口性能排查铁律（2026-08-13 教训）
+
+**遇到「接口慢」，第一步必须分离「数据库耗时」和「应用层耗时」，不要直接猜 SQL。**
+- 方法：跑一次 `EXPLAIN (ANALYZE)` 拿到数据库真实耗时，与接口总耗时对比
+- 教训：Defectivesearch 跨5年查询，我推理了三轮 SQL 优化全错，熊旺跑一次 EXPLAIN 发现数据库只要 0.34s → 真凶在 n8n Set 节点 O(N²)
+- **拿不到执行计划就不要下 SQL 层面的结论**
+
 ### ⭐⭐ Lowcoder 参数铁律（2026-08-12 教训）
 
 **以后凡Lowcoder组件参数，一律先grep前端包确认枚举值再写，不许猜。**
