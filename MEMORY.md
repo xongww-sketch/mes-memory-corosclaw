@@ -722,6 +722,26 @@ remark?: string;     // 备注
 
 ---
 
+### 🔍 daily_info wifi_mac 排查收口（2026-08-20~21）
+
+**结论**：6/30 Code 节点加固后，有 WiFi 机型 wifi_mac 零遗漏（29,392 个 retroid 验证）。
+
+**存量问题**：3,073 台空 MAC 全部是 5 月生产、首次出库的库存机，源头 production_detail 快照为空。
+**修复方案**：一条 UPDATE 补 production_detail 快照即可，工作流不用改。
+
+**重要发现**：
+- get_mespackingdata 的 daily_info 写入分支是死分支（节点无入边），从来没执行过
+- `selectBlind_api_temp` 不含工序 148，**不能用来验 MAC**，必须用 `selectBlind_api`
+- n8n 表达式 `{{ }}` 内部抛错时返回 undefined/null，**不会中断节点**（反直觉，已实测验证）
+
+**教训（必须记住）**：
+1. 断言"会崩溃丢数据"之前，先找真实数据验证它在不在库里
+2. 验证方法本身要先跑一组"已知为真"的对照，否则会把工具缺陷当成业务结论
+
+**新需求（8/21）**：Jackson 要求后续 daily_info 插入时统一更新 production_createtime/packing_createtime/delivery_createtime 三个时间戳，待方案设计。
+
+---
+
 ### 遗留待办
 - [x] PRD V2.0 一期/二期拆分版撰写完成（2026-05-11）
 - [x] F3 维修工站 PRD 增补：进站设计增加纯前端统计列表（工单号+数量，带清零按钮）（2026-05-25 新增，2026-05-26 已写入文档）
